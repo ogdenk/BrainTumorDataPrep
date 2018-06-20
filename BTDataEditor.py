@@ -27,3 +27,4 @@ editdf = df[df['Feature Class'] != 'info']
 
 #Save edited data frame to a new tsv file--ends up comma delinated, ok?
 editdf.to_csv('/Volumes/Public/PosteriorFossaTumors/PAT00010/T1e.tsv')
+
