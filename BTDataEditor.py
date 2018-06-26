@@ -56,7 +56,7 @@ while k < listLength:
     location = pathName + "/" + patientNum + "/" + fileName + ".tsv"
     locationE = pathName + "/" + patientNum + "/" + fileNameEdit + ".tsv"
 
-    # import .tsv file as panda data frame for manipulation, need to change .from_csv to .read_csv
+    # import .tsv file as panda data frame for manipulation
     df = pd.read_csv(location, index_col = 0, parse_dates = True, sep = '\t', header = 0)
 
     # find all entries with Feature Class: info, not needed?

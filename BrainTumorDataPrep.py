@@ -2,6 +2,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 
 pathName = "/Volumes/Public/Test"
 
@@ -21,6 +22,7 @@ listOfFNames = list()
 # use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown = True):
     files = [file for file in files if file.endswith('.tsv')]  # only grab .tsv files (all we need)
+    files = [file for file in files if file.startswith('e')]  # only grab edited files
     dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
     listOfFiles += [os.path.join(root, file) for file in files]  # not really needed, redundant to be removed later
     listOfFNames += files  # create list of .tsv files from all PAT folders
@@ -40,14 +42,36 @@ while i < listLength:
 
 # make a matrix combining listOfFiles and listOfPAT, column 0 = patient number, column 1 = file name
 fileMatrix = np.column_stack((listOfFiles, listOfFNames))
-print(fileMatrix)
+# print(fileMatrix)
 
 k = 0
 
 dataSet = np.array([])
+# dataSet[:, 0] = listOfFNames
+# dataSet[:, 0] = listOfAttributes
+# dataSet[] = tumorType
+
+# import .tsv file as panda data frame for manipulation
+df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+
+# find total # of rows in .tsv file ie: number of attributes
+total_rows = df.shape[0]
+
+# not in while loop as we only want to do this once at the beginning
+info_entries = df['Feature Name'].tolist()
+
+dataSet = np.append(dataSet, info_entries[:])  # currently doesn't work adds info_entries as a row, want column :(
 
 while k < listLength:
     patientNum = fileMatrix[k, 0]
     fileName = fileMatrix[k, 1]
     fileNameEdit = fileName + 'E'
+
+    # generate locations for input and output files
+    location = pathName + "/" + patientNum + "/" + fileName + ".tsv"
+
+    # import .tsv file as panda data frame for manipulation
+    df = pd.read_csv(location, index_col= 0, parse_dates=True, sep=',', header=0)
+
     k = k + 1
+
