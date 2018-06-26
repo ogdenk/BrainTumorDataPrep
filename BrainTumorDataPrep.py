@@ -43,6 +43,9 @@ fileMatrix = np.column_stack((listOfFiles, listOfFNames))
 print(fileMatrix)
 
 k = 0
+
+dataSet = np.array([])
+
 while k < listLength:
     patientNum = fileMatrix[k, 0]
     fileName = fileMatrix[k, 1]
