@@ -1,9 +1,9 @@
-# Program to autopopulate matrix of data spreadsheets and identify data with seperate key matrix
+# Program to auto-populate matrix of data spreadsheets and identify data with separate key matrix
 
 import os
 import numpy as np
 
-pathName = "/Volumes/Public/PosteriorFossaTumors"
+pathName = "/Volumes/Public/Test"
 
 # make sure that the Drobo is mounted and findable
 os.getcwd()
@@ -12,7 +12,7 @@ if os.path.exists(pathName) is False:
     print("ERROR: The path does not exist.")
     exit()
 
-# display all tsv files in PosteriorFossaTumors folder
+# display all tsv files in project folder
 
 listOfFiles = list()
 listOfPAT = list()
@@ -26,7 +26,7 @@ for root, dirs, files in os.walk(pathName, topdown = True):
     listOfFNames += files  # create list of .tsv files from all PAT folders
     listOfPAT += dirs  # incorrect, only gives one instance each instead of listing the folder name for each file within
 
-# remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename from root list
+# remove pathName and 'filename from root list
 j = 0
 listLength = len(listOfFiles)
 while j < listLength:
@@ -48,7 +48,3 @@ while k < listLength:
     fileName = fileMatrix[k, 1]
     fileNameEdit = fileName + 'E'
     k = k + 1
-# patientNum = fileMatrix[0, 0]
-print(patientNum)
-print(fileName)
-print(fileNameEdit)
