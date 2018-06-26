@@ -8,7 +8,10 @@ import os
 
 # make sure that the Drobo is mounted and findable
 os.getcwd()
-print(os.path.exists("/Volumes/Public/PosteriorFossaTumors/PAT00010"))
+# if the path does not exist the program will end early and give an error message
+if (os.path.exists("/Volumes/Public/Test") == False):
+    print("ERROR: The path does not exist.")
+    exit()
 
 continueYN = "y"
 
