@@ -8,7 +8,7 @@ pathName = "/Volumes/Public/PosteriorFossaTumors"
 # make sure that the Drobo is mounted and findable
 os.getcwd()
 # if the path does not exist the program will end early and give an error message
-if (os.path.exists(pathName) == False):
+if os.path.exists(pathName) is False:
     print("ERROR: The path does not exist.")
     exit()
 
@@ -18,7 +18,7 @@ listOfFiles = list()
 listOfPAT = list()
 listOfFNames = list()
 
-#use os.walk() to walk through directory and grab files that we're interested in
+# use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown = True):
     files = [file for file in files if file.endswith('.tsv')]  # only grab .tsv files (all we need)
     dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
@@ -26,13 +26,13 @@ for root, dirs, files in os.walk(pathName, topdown = True):
     listOfFNames += files  # create list of .tsv files from all PAT folders
     listOfPAT += dirs  # incorrect, only gives one instance each instead of listing the folder name for each file within
 
-#remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename from root list
+# remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename from root list
 j = 0
 listLength = len(listOfFiles)
 while j < listLength:
-    listOfFiles[j] = listOfFiles[j].replace(pathName + '/' ,'')
+    listOfFiles[j] = listOfFiles[j].replace(pathName + '/', '')
     listOfFiles[j] = listOfFiles[j][0:8]  # remove the file name by keeping only the first 8 char
-    j= j + 1
+    j = j + 1
 i = 0
 while i < listLength:
     listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
@@ -44,11 +44,11 @@ print(fileMatrix)
 
 k = 0
 while k < listLength:
-    patientNum = fileMatrix[k,0]
-    fileName = fileMatrix[k,1]
+    patientNum = fileMatrix[k, 0]
+    fileName = fileMatrix[k, 1]
     fileNameEdit = fileName + 'E'
     k = k + 1
-#patientNum = fileMatrix[0, 0]
+# patientNum = fileMatrix[0, 0]
 print(patientNum)
 print(fileName)
 print(fileNameEdit)
