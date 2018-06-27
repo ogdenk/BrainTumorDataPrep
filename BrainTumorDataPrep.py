@@ -52,13 +52,15 @@ dataSet = np.empty([3364, col_num - 1], dtype = object)  # rows, columns
 # dataSet[] = tumorType
 
 # import .tsv file as panda data frame for manipulation
-df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+excel_df = pd.read_excel(pathName + '/SliceData.xlsx', sheet_name = None, header = 0)
+
 
 # find total # of rows in .tsv file ie: number of attributes
-total_rows = df.shape[0]
+total_rows = tsv_df.shape[0]
 
 # not in while loop as we only want to do this once at the beginning
-info_entries = df['Feature Name'].tolist()
+info_entries = tsv_df['Feature Name'].tolist()
 attributes = np.array(info_entries)
 dataSet = np.insert(dataSet, 0, attributes, axis = 1)
 
