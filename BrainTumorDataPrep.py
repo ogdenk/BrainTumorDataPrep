@@ -53,7 +53,7 @@ dataSet = np.empty([3364, col_num - 1], dtype = object)  # rows, columns
 
 # import .tsv file as panda data frame for manipulation
 tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-excel_df = pd.read_excel(pathName + '/SliceData.xlsx', sheet_name = None, header = 0)
+excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name = 'Sheet2', header = 0)
 
 
 # find total # of rows in .tsv file ie: number of attributes
@@ -81,6 +81,27 @@ while i < col_num:
     i = i + 1
     count = count + 1
 dataSet = np.insert(dataSet, 0, patNum, axis = 0)
+
+# create a list of tumor types, 256 entries for each patient then add tumorType row to dataSet matrix
+tumor_Type = excel_df['Type'].tolist()
+tumorType = np.empty([1, col_num], dtype = object)
+i = 1
+# noinspection PyRedeclaration
+count = 0
+tumor = 0
+current = tumor_Type[0]
+tumorType[0, 0] = ''
+while i < col_num:
+    tumorType[0, i] = current
+    if count == 256:
+        count = 0
+        tumor = tumor + 1
+        if tumor < total_pats:
+            current = tumor_Type[tumor]
+    i = i + 1
+    count = count + 1
+dataSet = np.insert(dataSet, 1, tumorType, axis = 0)
+
 k = 0
 while k < listLength:
     patientNum = fileMatrix[k, 0]
@@ -93,4 +114,8 @@ while k < listLength:
     df = pd.read_csv(location, index_col= 0, parse_dates=True, sep=',', header=0)
 
     k = k + 1
+# set headers for first two rows
+dataSet[0, 0] = 'Patient Number'
+dataSet[1, 0] = 'Tumor Type'  # 0:Medulloblastoma, 1: Pilocytic Astrocytoma, 2: Ependymoma
 
+print("Done!")
