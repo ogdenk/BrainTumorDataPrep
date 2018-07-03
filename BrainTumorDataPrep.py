@@ -31,6 +31,7 @@ for root, dirs, files in os.walk(pathName, topdown=True):
 # remove pathName and 'filename from root list
 j = 0
 listLength = len(listOfFiles)
+numberOfPatientsTotal = len(listOfPAT)
 while j < listLength:
     listOfFiles[j] = listOfFiles[j].replace(pathName + '/', '')
     listOfFiles[j] = listOfFiles[j][0:8]  # remove the file name by keeping only the first 8 char
@@ -47,8 +48,8 @@ excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', heade
 
 slices = excel_df['Slice_Num'].tolist()
 x = 0
-for slice in slices:
-    slices[x] = pow(4, slice)
+for sliceNumber in slices:
+    slices[x] = pow(4, sliceNumber)
     x = x + 1
 col_num = sum(slices)
 total_pats = len(listOfPAT)
@@ -69,6 +70,8 @@ total_rows = tsv_df.shape[0]
 # not in while loop as we only want to do this once at the beginning
 info_entries = tsv_df['Feature Name'].tolist()
 attributes = np.array(info_entries)
+# trim attributes to the first instance (ie: 841)
+pd.cut(attributes, bins = )
 dataSet = np.insert(dataSet, 0, attributes, axis=1)
 
 # create a list of patient names, there should be 256 entries of each name and set to first row of dataSet
@@ -113,10 +116,9 @@ dataSet = np.insert(dataSet, 1, tumorType, axis=0)
 dataSet[0, 0] = 'Patient Number'
 dataSet[1, 0] = 'Tumor Type'  # 0:Medulloblastoma, 1: Pilocytic Astrocytoma, 2: Ependymoma
 
-a = 0
-while a < listLength:
-    patientNum = fileMatrix[a, 0]
-
+patient_Num = 0  # count number of patients completed
+while patient_Num < numberOfPatientsTotal:
+    patientNum = listOfPAT[patient_Num]
     # generate locations for input file
     location = pathName + "/" + patientNum
 
@@ -157,7 +159,7 @@ while a < listLength:
     ADC_value = 0
     valueVector = [] * 4  # initialize a vector that will hold 4 values
     column_num = pow(4, slice_num)
-    testArray = np.empty([841, column_num], dtype=object)  # 841 = number of attributes
+    tempArray = np.empty([841, column_num], dtype=object)  # 841 = number of attributes
 
     # iterate through the rows
     valuesT1 = tsvT1_df['Value']
@@ -189,7 +191,9 @@ while a < listLength:
                             ADC_value = valuesADC.iloc[index]
                             m = m + 1
                             valueVector = [T1_value, T2_value, Flair_value, ADC_value]
-                            testArray[row, column] = valueVector
+                            tempArray[row, column] = valueVector
+                            dataColumn = column + 1 + patient_Num * pow(4, slice_num)
+                            dataSet[2 + row, dataColumn] = valueVector
                             if column < column_num:
                                 column = column + 1
                             if column > (column_num - 1):
@@ -197,14 +201,11 @@ while a < listLength:
                                 j = slice_num
                                 k = slice_num
                                 m = slice_num
-                            # dataSet[row, column] = valueVector
                         m = 0
                     k = 0
                 j = 0
             i = 0
         column = 0
         row = row + 1
-
-    # add test matrix to dataSet in the proper location
-    a = a + 1
+    patient_Num = patient_Num + 1
 print("Done!")
