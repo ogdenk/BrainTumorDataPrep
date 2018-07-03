@@ -71,7 +71,7 @@ total_rows = tsv_df.shape[0]
 info_entries = tsv_df['Feature Name'].tolist()
 attributes = np.array(info_entries)
 # trim attributes to the first instance (ie: 841)
-pd.cut(attributes, bins = )
+# pd.cut(attributes, bins = )  # not working atm
 dataSet = np.insert(dataSet, 0, attributes, axis=1)
 
 # create a list of patient names, there should be 256 entries of each name and set to first row of dataSet
