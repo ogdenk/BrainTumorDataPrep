@@ -52,15 +52,20 @@ dataSet = np.empty([3364, col_num - 1], dtype=object)  # rows, columns
 # dataSet[] = tumorType
 
 # import .tsv file as panda data frame for manipulation
-tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+# need to automate & move to later in the code **make sure to leave one to use for early calculations
+tsvFlair_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+tsvT1_df = pd.read_csv(pathName + "/PAT00010/eT1.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+tsvT2_df = pd.read_csv(pathName + "/PAT00010/eT2.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+tsvDWI_df = pd.read_csv(pathName + "/PAT00010/eDWI.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+# tsvADC = pd.read_csv(pathName + "/PAT00010/eADC.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
 
 # find total # of rows in .tsv file ie: number of attributes, repeats per slice so only grab the first instance?
-total_rows = tsv_df.shape[0]
+total_rows = tsvFlair_df.shape[0]
 
 # set attribute names to first column
 # not in while loop as we only want to do this once at the beginning
-info_entries = tsv_df['Feature Name'].tolist()
+info_entries = tsvFlair_df['Feature Name'].tolist()
 attributes = np.array(info_entries)
 dataSet = np.insert(dataSet, 0, attributes, axis=1)
 
@@ -122,11 +127,11 @@ dataSet[1, 0] = 'Tumor Type'  # 0:Medulloblastoma, 1: Pilocytic Astrocytoma, 2: 
 slice_num = 0
 
 # use pandas to find 293-296, if exists add 1 to slice_num: MAX = 4, MIN = 1
-# find part of a string? or edit string in BTDataEditor to only include slice num?
-x = '301: F@AX FLAIR-label_label_296' in tsv_df.index
-y = '301: F@AX FLAIR-label_label_295' in tsv_df.index
-z = '301: F@AX FLAIR-label_label_294' in tsv_df.index
-w = '301: F@AX FLAIR-label_label_293' in tsv_df.index
+# change to ADC in the future
+x = '201: F AX T2-label_label_293' in tsvT2_df.index
+y = '201: F AX T2-label_label_294' in tsvT2_df.index
+z = '201: F AX T2-label_label_295' in tsvT2_df.index
+w = '201: F AX T2-label_label_296' in tsvT2_df.index
 if x:
     slice_num = slice_num + 1
 if y:
@@ -135,7 +140,6 @@ if z:
     slice_num = slice_num + 1
 if w:
     slice_num = slice_num + 1
-
 
 # create data augmentation vectors, to start just working on 1 patient (add another while loop to go through patients?)
 i = 0
@@ -153,24 +157,31 @@ valueVector = [] * 4  # initialize a vector that will hold 4 values
 column_num = pow(4, slice_num)
 testArray = np.empty([total_rows, column_num], dtype=object)
 # iterate through the rows
+valuesT1 = tsvT1_df['Value']
+valuesT2 = tsvT2_df['Value']
+valuesFlair = tsvFlair_df['Value']
+valuesADC = tsvDWI_df['Value']  # change to ADC later
+print(valuesT1[0])  # works
+print(valuesT2[5])  # throws an error??
+print(valuesFlair[0])
 while row < total_rows:
     # iterate through the columns
     while column < column_num:
         # walk through T1
         while i < slice_num:
-            T1_value = i
+            T1_value = valuesT1[i * 841 + row]
             i = i + 1
             # walk through T2
             while j < slice_num:
-                T2_value = j
+                T2_value = valuesT2[j * 841 + row]
                 j = j + 1
                 # walk through Flair
                 while k < slice_num:
-                    Flair_value = k
+                    Flair_value = valuesFlair[k * 841 + row]
                     k = k + 1
                     # walk through ADC
                     while m < slice_num:
-                        ADC_value = m
+                        ADC_value = valuesADC[m * 841 + row]
                         m = m + 1
                         valueVector = [T1_value, T2_value, Flair_value, ADC_value]
                         testArray[row, column] = valueVector
