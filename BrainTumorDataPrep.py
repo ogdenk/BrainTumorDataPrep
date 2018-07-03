@@ -155,33 +155,35 @@ ADC_value = 0
 valueVector = [] * 4  # initialize a vector that will hold 4 values
 # slice_num = 4  # for test purposes
 column_num = pow(4, slice_num)
-testArray = np.empty([total_rows, column_num], dtype=object)
+testArray = np.empty([841, column_num], dtype=object)
 # iterate through the rows
 valuesT1 = tsvT1_df['Value']
 valuesT2 = tsvT2_df['Value']
 valuesFlair = tsvFlair_df['Value']
 valuesADC = tsvDWI_df['Value']  # change to ADC later
-print(valuesT1[0])  # works
-print(valuesT2[5])  # throws an error??
-print(valuesFlair[0])
-while row < total_rows:
+
+while row < 841:
     # iterate through the columns
     while column < column_num:
         # walk through T1
         while i < slice_num:
-            T1_value = valuesT1[i * 841 + row]
+            index = i * 841 + row
+            T1_value = valuesT1.iloc[index]
             i = i + 1
             # walk through T2
             while j < slice_num:
-                T2_value = valuesT2[j * 841 + row]
+                index = j * 841 + row
+                T2_value = valuesT2.iloc[index]
                 j = j + 1
                 # walk through Flair
                 while k < slice_num:
-                    Flair_value = valuesFlair[k * 841 + row]
+                    index = k * 841 + row
+                    Flair_value = valuesFlair.iloc[index]
                     k = k + 1
                     # walk through ADC
                     while m < slice_num:
-                        ADC_value = valuesADC[m * 841 + row]
+                        index = m * 841 + row
+                        ADC_value = valuesADC.iloc[index]
                         m = m + 1
                         valueVector = [T1_value, T2_value, Flair_value, ADC_value]
                         testArray[row, column] = valueVector
