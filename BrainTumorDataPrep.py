@@ -53,7 +53,7 @@ for sliceNumber in slices:
     x = x + 1
 col_num = sum(slices)
 total_pats = len(listOfPAT)
-dataSet = np.empty([3364, col_num], dtype=object)  # rows, columns
+dataSet = np.empty([841, col_num], dtype=object)  # rows, columns
 # dataSet[:, 0] = listOfFNames
 # dataSet[:, 0] = listOfAttributes
 # dataSet[] = tumorType
@@ -69,10 +69,12 @@ total_rows = tsv_df.shape[0]
 # set attribute names to first column
 # not in while loop as we only want to do this once at the beginning
 info_entries = tsv_df['Feature Name'].tolist()
+info_entries = info_entries[0:841]
 attributes = np.array(info_entries)
 # trim attributes to the first instance (ie: 841)
 # pd.cut(attributes, bins = )  # not working atm
 dataSet = np.insert(dataSet, 0, attributes, axis=1)
+
 
 # create a list of patient names, there should be 256 entries of each name and set to first row of dataSet
 count = 0
