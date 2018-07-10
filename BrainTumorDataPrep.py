@@ -212,8 +212,7 @@ while patient_Num < numberOfPatientsTotal:
         row = row + 1
     patient_Num = patient_Num + 1
 print("Done!")
-# save df as a tsv file? **dataset is not a dataframe atm, fix that
-# pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+# convert numpy array to a dataframe and then save df as a tsv file
 dt = pd.DataFrame(dataSet)
 pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False)
-# np.savetxt('dataSet.tsv', dataSet, delimiter=',')
+
