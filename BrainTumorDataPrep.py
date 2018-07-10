@@ -53,7 +53,8 @@ for sliceNumber in slices:
     x = x + 1
 col_num = sum(slices)
 total_pats = len(listOfPAT)
-dataSet = np.empty([841, col_num], dtype=object)  # rows, columns
+dataSet = np.empty([841, col_num], dtype=object)
+# dataSetTest = pd.DataFrame(data=dataSet)  # rows, columns
 # dataSet[:, 0] = listOfFNames
 # dataSet[:, 0] = listOfAttributes
 # dataSet[] = tumorType
@@ -212,5 +213,7 @@ while patient_Num < numberOfPatientsTotal:
     patient_Num = patient_Num + 1
 print("Done!")
 # save df as a tsv file? **dataset is not a dataframe atm, fix that
-pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-pd.DataFrame.to_csv(dataSet, location, sep=',')
+# pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+dt = pd.DataFrame(dataSet)
+pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False)
+# np.savetxt('dataSet.tsv', dataSet, delimiter=',')
