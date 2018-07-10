@@ -23,10 +23,10 @@ listOfFNames = list()
 for root, dirs, files in os.walk(pathName, topdown=True):
     files = [file for file in files if file.endswith('.tsv')]  # only grab .tsv files (all we need)
     files = [file for file in files if file.startswith('e')]  # only grab edited files
-    dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
-    listOfFiles += [os.path.join(root, file) for file in files]  # not really needed, redundant to be removed later
+    dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT
+    listOfFiles += [os.path.join(root, file) for file in files]
     listOfFNames += files  # create list of .tsv files from all PAT folders
-    listOfPAT += dirs  # incorrect, only gives one instance each instead of listing the folder name for each file
+    listOfPAT += dirs  # only gives one instance each instead of listing the folder name for each file
 
 # remove pathName and 'filename from root list
 j = 0
@@ -41,13 +41,13 @@ while i < listLength:
     listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
     i = i + 1
 
-# make a matrix combining listOfFiles and listOfPAT, column 0 = patient number, column 1 = file name, never used?
-fileMatrix = np.column_stack((listOfFiles, listOfFNames))
-
 # sort list into alphabetical order to ensure correct assignment of tumor type and data
 listOfPAT.sort()
+# read in the excel file containing patient #, tumor type, and number of slices
+# the excel file has been edited to just include relevant data, this is located on sheet 2
 excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
 
+# use slice number to determine number of columns ie the number of augmented data sets, 4 slices = 256 etc
 slices = excel_df['Slice_Num'].tolist()
 x = 0
 for sliceNumber in slices:
@@ -55,16 +55,12 @@ for sliceNumber in slices:
     x = x + 1
 col_num = sum(slices)
 total_pats = len(listOfPAT)
+# there are 841 different attributes calculated by slicer that we are interested in
+# use dtype object to ensure there are no errors including both string and float data
 dataSet = np.empty([841, col_num], dtype=object)
-# dataSetTest = pd.DataFrame(data=dataSet)  # rows, columns
-# dataSet[:, 0] = listOfFNames
-# dataSet[:, 0] = listOfAttributes
-# dataSet[] = tumorType
 
-# import .tsv file as panda data frame for manipulation
-# need to automate & move to later in the code **make sure to leave one to use for early calculations
+# import .tsv file as panda data frame for manipulation, use one as a template to generate attribute list
 tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-# tsvADC = pd.read_csv(pathName + "/PAT00010/eADC.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 
 # find total # of rows in .tsv file ie: number of attributes, repeats per slice so only grab the first instance?
 total_rows = tsv_df.shape[0]
@@ -75,11 +71,10 @@ info_entries = tsv_df['Feature Name'].tolist()
 info_entries = info_entries[0:841]
 attributes = np.array(info_entries)
 # trim attributes to the first instance (ie: 841)
-# pd.cut(attributes, bins = )  # not working atm
 dataSet = np.insert(dataSet, 0, attributes, axis=1)
 
-
-# create a list of patient names, there should be 256 entries of each name and set to first row of dataSet
+# create a list of patient names, there should be approx 256 entries of each name and set to first row of dataSet
+# number of name repeats will depend on number of slices
 count = 0
 pat = 0
 i = 1
@@ -101,7 +96,7 @@ dataSet = np.insert(dataSet, 0, patNum, axis=0)
 tumor_Type = excel_df['Type'].tolist()
 tumorType = np.empty([1, col_num + 1], dtype=object)
 i = 1
-# noinspection PyRedeclaration
+
 count = 0
 tumor = 0
 current = tumor_Type[0]
@@ -119,7 +114,7 @@ dataSet = np.insert(dataSet, 1, tumorType, axis=0)
 
 # set headers for first two rows
 dataSet[0, 0] = 'Patient Number'
-dataSet[1, 0] = 'Tumor Type'  # 0:Medulloblastoma, 1: Pilocytic Astrocytoma, 2: Ependymoma
+dataSet[1, 0] = 'Tumor Type'  # 0: Medulloblastoma, 1: Pilocytic Astrocytoma, 2: Ependymoma
 
 patient_Num = 0  # count number of patients completed
 while patient_Num < numberOfPatientsTotal:
@@ -140,10 +135,9 @@ while patient_Num < numberOfPatientsTotal:
         tsvADC_df = pd.read_csv(location + "/eADC.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 
     # determine number of slices for each patient
-    slice_num = 0
-
+    slice_num = 0  # initialize
     # use pandas to find 293-296, if exists add 1 to slice_num: MAX = 4, MIN = 1
-    if tsvT1_df.index.str.contains('293').any():
+    if tsvT1_df.index.str.contains('293').any():  # check the index of T1df to see if it contains the slice #s anywhere
         slice_num = slice_num + 1
     if tsvT1_df.index.str.contains('294').any():
         slice_num = slice_num + 1
@@ -171,8 +165,10 @@ while patient_Num < numberOfPatientsTotal:
     valuesT1 = tsvT1_df['Value']
     valuesT2 = tsvT2_df['Value']
     valuesFlair = tsvFlair_df['Value']
-    valuesADC = tsvADC_df['Value']  # change to ADC later, currently using DWI files in the test folder
+    valuesADC = tsvADC_df['Value']  # may be DWI, ADC is being used as a catchall for both for simplicity's sake
 
+    # create augmented data by stepping through the slices, start by iterating through ADC then work backwards
+    # ie: [1,1,1,1],[1,1,1,2],[1,1,1,3],[1,1,1,4],[1,1,2,1],[1,1,2,2] ... [4,4,4,1], [4,4,4,2], [4,4,4,3], [4,4,4,4]
     while row < 841:
         # iterate through the columns
         while column < column_num:
@@ -191,7 +187,7 @@ while patient_Num < numberOfPatientsTotal:
                         index = k * 841 + row
                         Flair_value = valuesFlair.iloc[index]
                         k = k + 1
-                        # walk through ADC
+                        # walk through ADC (or DWI listed as ADC for convenience)
                         while m < slice_num:
                             index = m * 841 + row
                             ADC_value = valuesADC.iloc[index]
@@ -202,7 +198,7 @@ while patient_Num < numberOfPatientsTotal:
                             dataSet[2 + row, dataColumn] = valueVector
                             if column < column_num:
                                 column = column + 1
-                            if column > (column_num - 1):
+                            if column > (column_num - 1):  # iterate to next row?
                                 i = slice_num
                                 j = slice_num
                                 k = slice_num
@@ -212,9 +208,9 @@ while patient_Num < numberOfPatientsTotal:
                 j = 0
             i = 0
         column = 0
-        row = row + 1
-    patient_Num = patient_Num + 1
-print("Done!")
+        row = row + 1  # move to next attribute
+    patient_Num = patient_Num + 1  # move to next patient and start the process over
+print("Done!")  # check that while loop has completed for testing purposes
 # convert numpy array to a data frame and then save df as a tsv file
 dt = pd.DataFrame(dataSet)
 pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
