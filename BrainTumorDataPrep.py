@@ -28,7 +28,7 @@ for root, dirs, files in os.walk(pathName, topdown=True):
     listOfFNames += files  # create list of .tsv files from all PAT folders
     listOfPAT += dirs  # only gives one instance each instead of listing the folder name for each file
 
-# remove pathName and 'filename from root list
+# remove pathName and filename from root list, this gives us a list of patient names with one per file
 j = 0
 listLength = len(listOfFiles)
 numberOfPatientsTotal = len(listOfPAT)
@@ -37,9 +37,6 @@ while j < listLength:
     listOfFiles[j] = listOfFiles[j][0:8]  # remove the file name by keeping only the first 8 char
     j = j + 1
 i = 0
-while i < listLength:
-    listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
-    i = i + 1
 
 # sort list into alphabetical order to ensure correct assignment of tumor type and data
 listOfPAT.sort()
@@ -56,29 +53,29 @@ for sliceNumber in slices:
 col_num = sum(slices)
 total_pats = len(listOfPAT)
 # there are 841 different attributes calculated by slicer that we are interested in
-# use dtype object to ensure there are no errors including both string and float data
+# use dtype = object to ensure there are no errors including both string and float data
+# create an empty data set with 841 rows (# of attributes) and the previously calculated number of columns
 dataSet = np.empty([841, col_num], dtype=object)
 
 # import .tsv file as panda data frame for manipulation, use one as a template to generate attribute list
 tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 
-# find total # of rows in .tsv file ie: number of attributes, repeats per slice so only grab the first instance?
-total_rows = tsv_df.shape[0]
-
 # set attribute names to first column
 # not in while loop as we only want to do this once at the beginning
 info_entries = tsv_df['Feature Name'].tolist()
-info_entries = info_entries[0:841]
+info_entries = info_entries[0:841]  # trim to just include first instance of attributes (they are repeated 4 times)
 attributes = np.array(info_entries)
 # trim attributes to the first instance (ie: 841)
-dataSet = np.insert(dataSet, 0, attributes, axis=1)
+dataSet = np.insert(dataSet, 0, attributes, axis=1)  # inserts attributes list as a new column
+# at the beginning of the data set
 
 # create a list of patient names, there should be approx 256 entries of each name and set to first row of dataSet
 # number of name repeats will depend on number of slices
 count = 0
 pat = 0
 i = 1
-patNum = np.empty([1, col_num + 1], dtype=object)
+patNum = np.empty([1, col_num + 1], dtype=object)  # col_num + 1 as we want an empty space to
+# fill with 'Patient Number' later
 current = listOfPAT[0]
 patNum[0, 0] = ''
 while i <= col_num:
@@ -90,13 +87,15 @@ while i <= col_num:
             current = listOfPAT[pat]
     i = i + 1
     count = count + 1
-dataSet = np.insert(dataSet, 0, patNum, axis=0)
+dataSet = np.insert(dataSet, 0, patNum, axis=0)  # add patient name row to the data set at the beginning
 
 # create a list of tumor types, 256 entries for each patient then add tumorType row to dataSet matrix
 tumor_Type = excel_df['Type'].tolist()
 tumorType = np.empty([1, col_num + 1], dtype=object)
 i = 1
 
+# use data gathered from the excel file to create a list of tumor types, with the proper number of repeats for each
+# patient
 count = 0
 tumor = 0
 current = tumor_Type[0]
@@ -110,7 +109,7 @@ while i <= col_num:
             current = tumor_Type[tumor]
     i = i + 1
     count = count + 1
-dataSet = np.insert(dataSet, 1, tumorType, axis=0)
+dataSet = np.insert(dataSet, 1, tumorType, axis=0)  # add row just under the patient number row
 
 # set headers for first two rows
 dataSet[0, 0] = 'Patient Number'
@@ -118,11 +117,12 @@ dataSet[1, 0] = 'Tumor Type'  # 0: Medulloblastoma, 1: Pilocytic Astrocytoma, 2:
 
 patient_Num = 0  # count number of patients completed
 while patient_Num < numberOfPatientsTotal:
-    patientNum = listOfPAT[patient_Num]
+    patientNum = listOfPAT[patient_Num]  # label # for the current patient, ie: patient_num(0) = PAT00010 etc.
     # generate locations for input file
     location = pathName + "/" + patientNum
 
     # import .tsv file as panda data frame for manipulation
+    # check to make sure all files exist for this patient, as none have all
     if os.path.exists(location + "/eFlair.tsv") is True:
         tsvFlair_df = pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
     if os.path.exists(location + "/eT1.tsv") is True:
@@ -130,7 +130,8 @@ while patient_Num < numberOfPatientsTotal:
     if os.path.exists(location + "/eT2.tsv") is True:
         tsvT2_df = pd.read_csv(location + "/eT2.tsv", index_col=0, parse_dates=True, sep=',', header=0)
     if os.path.exists(location + "/eDWI.tsv") is True:
-        tsvADC_df = pd.read_csv(location + "/eDWI.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+        tsvADC_df = pd.read_csv(location + "/eDWI.tsv", index_col=0, parse_dates=True, sep=',', header=0)  # set as ADC
+        # for convenience's sake
     if os.path.exists(location + "/eADC.tsv") is True:
         tsvADC_df = pd.read_csv(location + "/eADC.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 
@@ -146,7 +147,7 @@ while patient_Num < numberOfPatientsTotal:
     if tsvT1_df.index.str.contains('296').any():
         slice_num = slice_num + 1
 
-    # create data augmentation vectors
+    # create data augmentation vector and initialize counter variables, value holder variables
     i = 0
     j = 0
     k = 0
@@ -159,7 +160,6 @@ while patient_Num < numberOfPatientsTotal:
     ADC_value = 0
     valueVector = [] * 4  # initialize a vector that will hold 4 values
     column_num = pow(4, slice_num)
-    tempArray = np.empty([841, column_num], dtype=object)  # 841 = number of attributes
 
     # iterate through the rows
     valuesT1 = tsvT1_df['Value']
@@ -192,9 +192,9 @@ while patient_Num < numberOfPatientsTotal:
                             index = m * 841 + row
                             ADC_value = valuesADC.iloc[index]
                             m = m + 1
-                            valueVector = [T1_value, T2_value, Flair_value, ADC_value]
-                            tempArray[row, column] = valueVector
-                            dataColumn = column + 1 + patient_Num * pow(4, slice_num)
+                            valueVector = [T1_value, T2_value, Flair_value, ADC_value]  # combine current values to a
+                            # vector to be added to the data set as one block of data
+                            dataColumn = column + 1 + patient_Num * pow(4, slice_num)  # determine location for data
                             dataSet[2 + row, dataColumn] = valueVector
                             if column < column_num:
                                 column = column + 1
