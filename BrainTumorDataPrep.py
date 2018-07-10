@@ -233,6 +233,7 @@ while patient_Num < numberOfPatientsTotal:
         row = row + 1  # move to next attribute
     patient_Num = patient_Num + 1  # move to next patient and start the process over
 # convert numpy array to a data frame and then save df as a tsv file
-dt = pd.DataFrame(dataSet)
-pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
+df = pd.DataFrame(dataSet)
+pd.DataFrame.to_csv(df, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
+pd.DataFrame.to_hdf(pathName + '/data.h5', key='df', mode='w')
 print("Done!")
