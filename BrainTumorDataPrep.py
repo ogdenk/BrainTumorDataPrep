@@ -41,9 +41,11 @@ while i < listLength:
     listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
     i = i + 1
 
-# make a matrix combining listOfFiles and listOfPAT, column 0 = patient number, column 1 = file name
+# make a matrix combining listOfFiles and listOfPAT, column 0 = patient number, column 1 = file name, never used?
 fileMatrix = np.column_stack((listOfFiles, listOfFNames))
 
+# sort list into alphabetical order to ensure correct assignment of tumor type and data
+listOfPAT.sort()
 excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
 
 slices = excel_df['Slice_Num'].tolist()
@@ -126,27 +128,28 @@ while patient_Num < numberOfPatientsTotal:
     location = pathName + "/" + patientNum
 
     # import .tsv file as panda data frame for manipulation
-    tsvFlair_df = pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-    tsvT1_df = pd.read_csv(location + "/eT1.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-    tsvT2_df = pd.read_csv(location + "/eT2.tsv", index_col=0, parse_dates=True, sep=',', header=0)
-    tsvDWI_df = pd.read_csv(location + "/eDWI.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+    if os.path.exists(location + "/eFlair.tsv") is True:
+        tsvFlair_df = pd.read_csv(location + "/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+    if os.path.exists(location + "/eT1.tsv") is True:
+        tsvT1_df = pd.read_csv(location + "/eT1.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+    if os.path.exists(location + "/eT2.tsv") is True:
+        tsvT2_df = pd.read_csv(location + "/eT2.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+    if os.path.exists(location + "/eDWI.tsv") is True:
+        tsvADC_df = pd.read_csv(location + "/eDWI.tsv", index_col=0, parse_dates=True, sep=',', header=0)
+    if os.path.exists(location + "/eADC.tsv") is True:
+        tsvADC_df = pd.read_csv(location + "/eADC.tsv", index_col=0, parse_dates=True, sep=',', header=0)
 
     # determine number of slices for each patient
     slice_num = 0
 
     # use pandas to find 293-296, if exists add 1 to slice_num: MAX = 4, MIN = 1
-    # change to ADC in the future
-    x = '201: F AX T2-label_label_293' in tsvT2_df.index
-    y = '201: F AX T2-label_label_294' in tsvT2_df.index
-    z = '201: F AX T2-label_label_295' in tsvT2_df.index
-    w = '201: F AX T2-label_label_296' in tsvT2_df.index
-    if x:
+    if tsvT1_df.index.str.contains('293').any():
         slice_num = slice_num + 1
-    if y:
+    if tsvT1_df.index.str.contains('294').any():
         slice_num = slice_num + 1
-    if z:
+    if tsvT1_df.index.str.contains('295').any():
         slice_num = slice_num + 1
-    if w:
+    if tsvT1_df.index.str.contains('296').any():
         slice_num = slice_num + 1
 
     # create data augmentation vectors
@@ -168,7 +171,7 @@ while patient_Num < numberOfPatientsTotal:
     valuesT1 = tsvT1_df['Value']
     valuesT2 = tsvT2_df['Value']
     valuesFlair = tsvFlair_df['Value']
-    valuesADC = tsvDWI_df['Value']  # change to ADC later, currently using DWI files in the test folder
+    valuesADC = tsvADC_df['Value']  # change to ADC later, currently using DWI files in the test folder
 
     while row < 841:
         # iterate through the columns
@@ -212,7 +215,6 @@ while patient_Num < numberOfPatientsTotal:
         row = row + 1
     patient_Num = patient_Num + 1
 print("Done!")
-# convert numpy array to a dataframe and then save df as a tsv file
+# convert numpy array to a data frame and then save df as a tsv file
 dt = pd.DataFrame(dataSet)
-pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False)
-
+pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
