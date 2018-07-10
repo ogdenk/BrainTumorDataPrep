@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 pathName = "/Volumes/Public/Test"
-
+# pathName = '/Users/3Dlab/desktop/tester'
 # make sure that the Drobo is mounted and findable
 os.getcwd()
 # if the path does not exist the program will end early and give an error message
@@ -17,7 +17,7 @@ if os.path.exists(pathName) is False:
 
 listOfFiles = list()
 listOfPAT = list()
-listOfFNames = list()
+# listOfFNames = list()
 
 # use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown=True):
@@ -25,7 +25,7 @@ for root, dirs, files in os.walk(pathName, topdown=True):
     files = [file for file in files if file.startswith('e')]  # only grab edited files
     dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT
     listOfFiles += [os.path.join(root, file) for file in files]
-    listOfFNames += files  # create list of .tsv files from all PAT folders
+    # listOfFNames += files  # create list of .tsv files from all PAT folders
     listOfPAT += dirs  # only gives one instance each instead of listing the folder name for each file
 
 # remove pathName and filename from root list, this gives us a list of patient names with one per file
@@ -40,6 +40,7 @@ i = 0
 
 # sort list into alphabetical order to ensure correct assignment of tumor type and data
 listOfPAT.sort()
+listOfFiles.sort()
 # read in the excel file containing patient #, tumor type, and number of slices
 # the excel file has been edited to just include relevant data, this is located on sheet 2
 excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
@@ -52,10 +53,10 @@ for sliceNumber in slices:
     x = x + 1
 col_num = sum(slices)
 total_pats = len(listOfPAT)
-# there are 841 different attributes calculated by slicer that we are interested in
+# there are 841 different attributes calculated by slicer that we are interested in **multiply b 4 for different files
 # use dtype = object to ensure there are no errors including both string and float data
 # create an empty data set with 841 rows (# of attributes) and the previously calculated number of columns
-dataSet = np.empty([841, col_num], dtype=object)
+dataSet = np.empty([3364, col_num], dtype = object)
 
 # import .tsv file as panda data frame for manipulation, use one as a template to generate attribute list
 tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates=True, sep=',', header=0)
@@ -63,7 +64,21 @@ tsv_df = pd.read_csv(pathName + "/PAT00010/eFlair.tsv", index_col=0, parse_dates
 # set attribute names to first column
 # not in while loop as we only want to do this once at the beginning
 info_entries = tsv_df['Feature Name'].tolist()
-info_entries = info_entries[0:841]  # trim to just include first instance of attributes (they are repeated 4 times)
+# concatenate file name to attribute name
+i = 0
+while i < 3364:
+    while i < 841:
+        info_entries[i] = info_entries[i] + '_T1'
+        i = i + 1
+    while 840 < i < 1682:
+        info_entries[i] = info_entries[i] + '_T2'
+        i = i + 1
+    while 1681 < i < 2523:
+        info_entries[i] = info_entries[i] + '_Flair'
+        i = i + 1
+    while 2522 < i < 3364:
+        info_entries[i] = info_entries[i] + '_ADC'
+        i = i + 1
 attributes = np.array(info_entries)
 # trim attributes to the first instance (ie: 841)
 dataSet = np.insert(dataSet, 0, attributes, axis=1)  # inserts attributes list as a new column
@@ -96,19 +111,19 @@ i = 1
 
 # use data gathered from the excel file to create a list of tumor types, with the proper number of repeats for each
 # patient
-count = 0
+counter = 0
 tumor = 0
 current = tumor_Type[0]
 tumorType[0, 0] = ''
 while i <= col_num:
     tumorType[0, i] = current
-    if count == slices[tumor]:
-        count = 0
+    if counter == slices[tumor]:
+        counter = 0
         tumor = tumor + 1
         if tumor < total_pats:
             current = tumor_Type[tumor]
     i = i + 1
-    count = count + 1
+    counter = counter + 1
 dataSet = np.insert(dataSet, 1, tumorType, axis=0)  # add row just under the patient number row
 
 # set headers for first two rows
@@ -192,13 +207,20 @@ while patient_Num < numberOfPatientsTotal:
                             index = m * 841 + row
                             ADC_value = valuesADC.iloc[index]
                             m = m + 1
-                            valueVector = [T1_value, T2_value, Flair_value, ADC_value]  # combine current values to a
+                            # valueVector = [T1_value, T2_value, Flair_value, ADC_value]  # combine current values to a
                             # vector to be added to the data set as one block of data
+                            dataRowT1 = (row + 2)
+                            dataRowT2 = (row + 2) + 841
+                            dataRowFlair = (row + 2) + 1682
+                            dataRowADC = (row + 2) + 2523
                             dataColumn = column + 1 + patient_Num * pow(4, slice_num)  # determine location for data
-                            dataSet[2 + row, dataColumn] = valueVector
+                            dataSet[dataRowT1, dataColumn] = T1_value
+                            dataSet[dataRowT2, dataColumn] = T2_value
+                            dataSet[dataRowFlair, dataColumn] = Flair_value
+                            dataSet[dataRowADC, dataColumn] = ADC_value
                             if column < column_num:
                                 column = column + 1
-                            if column > (column_num - 1):  # iterate to next row?
+                            if column > (column_num - 1):  # iterate to next row don't just restart
                                 i = slice_num
                                 j = slice_num
                                 k = slice_num
@@ -210,7 +232,7 @@ while patient_Num < numberOfPatientsTotal:
         column = 0
         row = row + 1  # move to next attribute
     patient_Num = patient_Num + 1  # move to next patient and start the process over
-print("Done!")  # check that while loop has completed for testing purposes
 # convert numpy array to a data frame and then save df as a tsv file
 dt = pd.DataFrame(dataSet)
 pd.DataFrame.to_csv(dt, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
+print("Done!")
