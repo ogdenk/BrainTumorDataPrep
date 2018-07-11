@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 pathName = "/Volumes/Public/Test"
-# pathName = '/Users/3Dlab/desktop/tester'
+
 # make sure that the Drobo is mounted and findable
 os.getcwd()
 # if the path does not exist the program will end early and give an error message
@@ -207,8 +207,9 @@ while patient_Num < numberOfPatientsTotal:
                             index = m * 841 + row
                             ADC_value = valuesADC.iloc[index]
                             m = m + 1
-                            # valueVector = [T1_value, T2_value, Flair_value, ADC_value]  # combine current values to a
-                            # vector to be added to the data set as one block of data
+                            # determine the rows and columns that the data should be inserted into depending upon
+                            # place in the loop and image type ie: T1 data will be between 0 and 840,
+                            # T2 between 841 and 1681 etc
                             dataRowT1 = (row + 2)
                             dataRowT2 = (row + 2) + 841
                             dataRowFlair = (row + 2) + 1682
@@ -235,5 +236,5 @@ while patient_Num < numberOfPatientsTotal:
 # convert numpy array to a data frame and then save df as a tsv file
 df = pd.DataFrame(dataSet)
 pd.DataFrame.to_csv(df, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
-pd.DataFrame.to_hdf(pathName + '/data.h5', key='df', mode='w')
+pd.DataFrame.to_hdf(df, pathName + '/data.h5', key = 'Tumor_Data', mode='w')
 print("Done!")
