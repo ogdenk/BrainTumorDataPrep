@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-pathName = "/Volumes/Public/Test"
+pathName = "/Volumes/Public/PosteriorFossaTumors"
 
 # make sure that the Drobo is mounted and findable
 os.getcwd()
@@ -237,4 +237,5 @@ while patient_Num < numberOfPatientsTotal:
 df = pd.DataFrame(dataSet)
 pd.DataFrame.to_csv(df, pathName + '/dataSet.tsv', sep=',', header = False, index = False)
 pd.DataFrame.to_hdf(df, pathName + '/data.h5', key = 'Tumor_Data', mode='w')
+testDF = pd.read_hdf(pathName + '/data.h5', key = 'Tumor_Data', mode = 'r')
 print("Done!")
