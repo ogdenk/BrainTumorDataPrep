@@ -3,9 +3,8 @@
 import os
 import numpy as np
 import pandas as pd
-import skimage
 import pydicom as dicom
-# import dicom_numpy as dicom  # NOT USEFUL?
+
 
 pathName = "/Volumes/Public/Test"
 

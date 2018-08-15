@@ -37,28 +37,32 @@ for allPatients in listOfPAT:
         listOfFiles += [os.path.join(root, file) for file in files]
     numOfSlices.append(len(files))
 listOfFiles.sort()
-# print(listOfPAT, listOfFiles)
 total_pats = len(listOfPAT)
 
-# Get ref file
-RefDs = dicom.read_file(listOfFiles[0])
-
-# Load dimensions based on the number of rows, columns, and slices (along the Z axis)
-ConstPixelDims = (int(RefDs.Rows), int(RefDs.Columns), len(listOfFiles))
-
-# Load spacing values (in mm)
-ConstPixelSpacing = (float(RefDs.PixelSpacing[0]), float(RefDs.PixelSpacing[1]), float(RefDs.SliceThickness))
-
-dataSet = np.empty([ConstPixelDims, 4, 4], dtype = RefDs.pixel_array.dtype)
-
 i = 0
+y = 0
+data = {}
+patient = {}
+dataSet = {}
+
 while i < total_pats:
     j = 0
     while j < numOfSlices[i]:
         k = 0
         while k < 4:
-
+            if k == 0:
+                name = 'ADC'
+            if k == 1:
+                name = 'Flair'
+            if k == 2:
+                name = 'T1'
+            if k == 3:
+                name = 'T2'
+            ds = dicom.dcmread(listOfFiles[y])
+            number = str(j+1)
+            data[name + '.' + number] = ds.pixel_array
             k = k + 1
+            y = y + 1
         j = j + 1
     i = i + 1
-
+print('Donezo')
