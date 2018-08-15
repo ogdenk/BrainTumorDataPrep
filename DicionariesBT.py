@@ -23,6 +23,9 @@ fileName = list()
 listOfDirs = list()
 numOfSlices = list()
 
+excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
+tumorType = excel_df['Type'].tolist()
+
 # use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown=True):
     dirs = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT
@@ -59,10 +62,13 @@ while i < total_pats:
             if k == 3:
                 name = 'T2'
             ds = dicom.dcmread(listOfFiles[y])
-            number = str(j+1)
+            number = str(j + 1)
             data[name + '.' + number] = ds.pixel_array
             k = k + 1
             y = y + 1
         j = j + 1
+    patient['type'] = (tumorType(i))
+    patient['Data'] = data
+    dataSet[listOfPAT(i)] = patient
     i = i + 1
 print('Donezo')
