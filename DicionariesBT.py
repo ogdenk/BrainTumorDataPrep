@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 import pydicom as dicom
+import copy
 
 
 pathName = "/Volumes/Public/Test"
@@ -17,12 +18,14 @@ if os.path.exists(pathName) is False:
     print("ERROR: The path does not exist.")
     exit()
 
+# create empty list variables to hold file names, locations, directories, number of slices per patient etc
 listOfFiles = list()
 listOfPAT = list()
 fileName = list()
 listOfDirs = list()
 numOfSlices = list()
 
+# open excel data file and copy tumor type data into a list variable
 excel_df = pd.read_excel(pathName + '/SliceData.xls', sheet_name='Sheet2', header=0)
 tumorType = excel_df['Type'].tolist()
 
@@ -32,6 +35,7 @@ for root, dirs, files in os.walk(pathName, topdown=True):
     listOfPAT += dirs  # only gives one instance each instead of listing the folder name for each file
 listOfPAT.sort()
 
+# grab files only in slices folders
 for allPatients in listOfPAT:
     pathNameNew = pathName + '/' + allPatients + '/Slices'
     for root, dirs, files in os.walk(pathNameNew, topdown = True):
@@ -48,6 +52,10 @@ data = {}
 patient = {}
 dataSet = {}
 
+# populate three dictionaries of data
+# inner dictionary contains pixel data
+# center dictionary contains tumor type and inner dictionary
+# outer / main dictionary contains center dictionary and patient identification
 while i < total_pats:
     j = 0
     while j < numOfSlices[i]:
@@ -68,8 +76,8 @@ while i < total_pats:
             y = y + 1
         j = j + 1
     patient['type'] = (tumorType[i])
-    patient['Data'] = data
-    dataSet[listOfPAT[i]] = patient
+    patient['Data'] = copy.deepcopy(data)
+    dataSet[listOfPAT[i]] = copy.deepcopy(patient)
     i = i + 1
 print(len(dataSet))
 print('Donezo')
