@@ -4,6 +4,7 @@
 
 import os
 import numpy as np
+import h5py
 import pandas as pd
 import pydicom as dicom
 import copy
@@ -80,4 +81,8 @@ while i < total_pats:
     dataSet[listOfPAT[i]] = copy.deepcopy(patient)
     i = i + 1
 print(len(dataSet))
+
+# write final dictionary out into an hp5y file
+hf = h5py.File('dicData.h5', 'w')
+
 print('Donezo')
