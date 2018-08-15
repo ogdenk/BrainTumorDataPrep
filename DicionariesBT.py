@@ -67,8 +67,8 @@ while i < total_pats:
             k = k + 1
             y = y + 1
         j = j + 1
-    patient['type'] = (tumorType(i))
+    patient['type'] = (tumorType[i])
     patient['Data'] = data
-    dataSet[listOfPAT(i)] = patient
+    dataSet[listOfPAT[i]] = patient
     i = i + 1
 print('Donezo')
