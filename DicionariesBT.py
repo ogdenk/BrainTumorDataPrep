@@ -71,4 +71,5 @@ while i < total_pats:
     patient['Data'] = data
     dataSet[listOfPAT[i]] = patient
     i = i + 1
+print(len(dataSet))
 print('Donezo')
