@@ -83,6 +83,6 @@ while i < total_pats:
 print(len(dataSet))
 
 # write final dictionary out into an hp5y file
-hf = h5py.File('dicData.h5', 'w')
-
+dictionary = pd.DataFrame.from_dict(dataSet)
+pd.DataFrame.to_hdf(dictionary, pathName + '/dictionary.h5', key = 'Data', mode='w')
 print('Donezo')
