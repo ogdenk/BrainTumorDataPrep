@@ -3,14 +3,18 @@
 # Dictionary entries will hold data matrices containing all time slices for each channel of data
 
 import os
-import numpy as np
-import h5py
+from PIL import Image
+# import numpy as np
+# import h5py
 import pandas as pd
 import pydicom as dicom
 import copy
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 
-pathName = "/Volumes/Public/Test"
+pathName = "/Volumes/Public/PosteriorFossaTumors"
 
 # make sure that the Drobo is mounted and findable
 os.getcwd()
@@ -73,6 +77,8 @@ while i < total_pats:
             ds = dicom.dcmread(listOfFiles[y])
             number = str(j + 1)
             data[name + '.' + number] = ds.pixel_array
+            imgplot = plt.imshow(data[name + '.' + number])
+            plt.show()
             k = k + 1
             y = y + 1
         j = j + 1
@@ -82,7 +88,10 @@ while i < total_pats:
     i = i + 1
 print(len(dataSet))
 
-# write final dictionary out into an hp5y file
-dictionary = pd.DataFrame.from_dict(dataSet)
-pd.DataFrame.to_hdf(dictionary, pathName + '/dictionary.h5', key = 'Data', mode='w')
+# write final dictionary out into an hp5y file, start by converting dictionary into pandas data frame
+# use orient = 'index' so that the data is organized in rows not columns
+dictionary = pd.DataFrame.from_dict(dataSet, orient = 'index')
+pd.DataFrame.to_hdf(dictionary, pathName + '/dictionary.h5', key = 'dictionary', mode='w')
+pd.DataFrame.to_csv(dictionary, pathName + '/dictionary.tsv', sep=',', header = False, index = True)
+df = pd.read_hdf(pathName + '/dictionary.h5', 'dictionary')
 print('Donezo')
