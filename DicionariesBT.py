@@ -79,6 +79,7 @@ while i < total_pats:
             data[name + '.' + number] = ds.pixel_array
             imgplot = plt.imshow(data[name + '.' + number])
             plt.show()
+            plt.cla()
             k = k + 1
             y = y + 1
         j = j + 1
