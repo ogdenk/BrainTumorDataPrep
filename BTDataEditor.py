@@ -24,13 +24,13 @@ listOfFNames = list()
 
 # use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown = True):
-    files = [file for file in files if file.endswith('.tsv')]  # only grab .tsv files (all we need)
+    files = [file for file in files if (file.endswith('.tsv') and not(file.startswith('e')))]  # only grab .tsv files (all we need)
     dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
     listOfFiles += [os.path.join(root, file) for file in files]  # not really needed, redundant to be removed later
     listOfFNames += files  # create list of .tsv files from all PAT folders
     listOfPAT += dirs  # incorrect, only gives one instance each instead of listing the folder name for each file within
 
-# remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename from root list
+# remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename' from root list
 j = 0
 listLength = len(listOfFiles)
 while j < listLength:
@@ -38,6 +38,8 @@ while j < listLength:
     listOfFiles[j] = listOfFiles[j][0:8]  # remove the file name by keeping only the first 8 char
     j = j + 1
 i = 0
+
+# remove .tsv from the end of the file name
 while i < listLength:
     listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
     i = i + 1
@@ -60,10 +62,11 @@ while k < listLength:
     df = pd.read_csv(location, index_col = 0, parse_dates = True, sep = '\t', header = 0)
 
     # find all entries with Feature Class: info, not needed?
-    info_entries = df[df['Feature Class'] == 'info']
+    info_entries = df[df['Feature Class'] == 'info'].index
 
     # remove all entries with Feature Class: info
-    editdf = df[df['Feature Class'] != 'info']
+    editdf = df.copy(deep=True)
+    editdf.drop(info_entries)
 
     # Add column with patient number
     total_rows = editdf.shape[0]
@@ -80,12 +83,13 @@ while k < listLength:
     del editdf['Image type']
     del editdf['Feature Class']
 
+
     # replace NAN and INF with 0 in values column, use DataFrame.fillna()
     editdf.replace('inf', 0, inplace = True)  # for some reason inf is not registering as a numpy expression
     editdf.fillna(0, inplace = True)  # inplace = True overwrites the original file, same as df = df.fillna()
 
     # sort by label # to ensure that all are in the same order
-    df.sort_values(by=['Label'])
+    editdf.sort_values(by=['Label'])
 
     # Save edited data frame to a new tsv file--ends up comma delineated, ok?
     editdf.to_csv(locationE)

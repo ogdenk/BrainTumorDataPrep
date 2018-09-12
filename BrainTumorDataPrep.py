@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-pathName = "/Volumes/Public/PosteriorFossaTumors"
+pathName = "/Volumes/Public/Test"
 
 # make sure that the Drobo is mounted and findable
 os.getcwd()
