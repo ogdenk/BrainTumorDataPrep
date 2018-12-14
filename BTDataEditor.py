@@ -4,94 +4,64 @@
 
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
-# import csv
 import os
-pathName = "/Volumes/Public/Test"
+pathName = "x:/Test"
 
 # make sure that the Drobo is mounted and findable
-os.getcwd()
 # if the path does not exist the program will end early and give an error message
+
 if os.path.exists(pathName) is False:
     print("ERROR: The path does not exist.")
     exit()
 
-# display all tsv files in PosteriorFossaTumors folder
+patients = []
+PatDirs = []
+PatDirs = [os.path.join(pathName, name) for name in os.listdir(pathName)
+            if os.path.isdir(os.path.join(pathName, name))]
 
-listOfFiles = list()
-listOfPAT = list()
-listOfFNames = list()
+# Get a list of the identifiers
+for directory in PatDirs:
+    patients.append(os.path.split(directory)[1])
 
+tempFile = {}
+filesToProcess = []
 # use os.walk() to walk through directory and grab files that we're interested in
 for root, dirs, files in os.walk(pathName, topdown = True):
     files = [file for file in files if (file.endswith('.tsv') and not(file.startswith('e')))]  # only grab .tsv files (all we need)
-    dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
-    listOfFiles += [os.path.join(root, file) for file in files]  # not really needed, redundant to be removed later
-    listOfFNames += files  # create list of .tsv files from all PAT folders
-    listOfPAT += dirs  # incorrect, only gives one instance each instead of listing the folder name for each file within
+    #dirs[:] = [d for d in dirs if d.startswith('PAT')]  # only look in folders that start with PAT?
+    for element in files:
+        tempFile = {"Path":root, "File":element}
+        filesToProcess.append(tempFile)
 
-# remove '/Volumes/Public/PosteriorFossaTumors/' and 'filename' from root list
-j = 0
-listLength = len(listOfFiles)
-while j < listLength:
-    listOfFiles[j] = listOfFiles[j].replace(pathName + '/', '')
-    listOfFiles[j] = listOfFiles[j][0:8]  # remove the file name by keeping only the first 8 char
-    j = j + 1
-i = 0
-
-# remove .tsv from the end of the file name
-while i < listLength:
-    listOfFNames[i] = listOfFNames[i].replace('.tsv', '')
-    i = i + 1
-
-# make a matrix combining listOfFiles and listOfPAT, column 0 = patient number, column 1 = file name
-fileMatrix = np.column_stack((listOfFiles, listOfFNames))
+listLength = len(filesToProcess)
 
 # edit tsv file to desired specs
-k = 0
-while k < listLength:
-    patientNum = fileMatrix[k, 0]
-    fileName = fileMatrix[k, 1]
-    fileNameEdit = 'e' + fileName
+for i in range(listLength):
+    fileName = filesToProcess[i]["File"]
+    fileNameEdit = 'e' + os.path.splitext(fileName)[0]+'.csv'
+    pathName = filesToProcess[i]["Path"]
 
     # generate locations for input and output files
-    location = pathName + "/" + patientNum + "/" + fileName + ".tsv"
-    locationE = pathName + "/" + patientNum + "/" + fileNameEdit + ".tsv"
+    location = pathName + "/" + fileName
+    locationE = pathName + "/" + fileNameEdit
 
     # import .tsv file as panda data frame for manipulation
-    df = pd.read_csv(location, index_col = 0, parse_dates = True, sep = '\t', header = 0)
+    df = pd.read_csv(location,  index_col = "Feature Class", parse_dates = True, sep = '\t', header = 0)
+    #index_col = "Feature Class",
+    df = df.drop("info", axis=0)
+    df.reset_index(inplace=True)
+    # Remove the extraneous Label information
+    df['Label'] = df['Label'].astype(str).str[-9:]
+    df['Feature'] =  df['Image type'] + "_" + df['Feature Class'] + "_" + df['Feature Name'] + "_" + df['Label']
+    df.sort_values(by=['Label'])
 
-    # find all entries with Feature Class: info, not needed?
-    info_entries = df[df['Feature Class'] == 'info'].index
-
-    # remove all entries with Feature Class: info
-    editdf = df.copy(deep=True)
-    editdf.drop(info_entries)
-
-    # Add column with patient number
-    total_rows = editdf.shape[0]
-    i = 0
-    # make a 2D array with total_rows # of rows and one column
-    PatNum = [None] * total_rows
-
-    for total_rows in PatNum:
-        PatNum[i] = patientNum
-        i = i + 1
-    editdf.insert(0, 'PatNum', PatNum)
-
-    # remove Image Type and Feature Class columns
-    del editdf['Image type']
-    del editdf['Feature Class']
-
+    # Create a new dataframe with only the Feature and Value
+    editdf = pd.DataFrame()
+    editdf = df[['Feature', 'Value']]
 
     # replace NAN and INF with 0 in values column, use DataFrame.fillna()
     editdf.replace('inf', 0, inplace = True)  # for some reason inf is not registering as a numpy expression
     editdf.fillna(0, inplace = True)  # inplace = True overwrites the original file, same as df = df.fillna()
 
-    # sort by label # to ensure that all are in the same order
-    editdf.sort_values(by=['Label'])
-
     # Save edited data frame to a new tsv file--ends up comma delineated, ok?
-    editdf.to_csv(locationE)
-
-    k = k + 1
+    editdf.to_csv(locationE,index=False)
