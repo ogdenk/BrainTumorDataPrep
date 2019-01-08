@@ -52,8 +52,8 @@ for i in range(listLength):
     df.reset_index(inplace=True)
     # Remove the extraneous Label information
     df['Label'] = df['Label'].astype(str).str[-9:]
-    df['Feature'] =  df['Image type'] + "_" + df['Feature Class'] + "_" + df['Feature Name'] + "_" + df['Label']
-    df.sort_values(by=['Label'])
+    df['Feature'] =  os.path.splitext(fileName)[0] + "_" + df['Image type'] + "_" + df['Feature Class'] + "_" + df['Feature Name'] + "_" + df['Label']
+    df.sort_values(by=['Label'], inplace=True)
 
     # Create a new dataframe with only the Feature and Value
     editdf = pd.DataFrame()
